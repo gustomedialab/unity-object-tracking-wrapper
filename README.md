@@ -1,3 +1,9 @@
+## For Gusto Dev:
+- C#/Unity side
+  - unityProject/Assets/Scripts/Script_ar.cs
+- C++ side
+  -vispWrapper/GustoUnityWrapper.h
+  -vispWrapper/GustoUnityWrapper.cpp
 ## Developement of a wrapper between ViSP and Unity engine
 
 ### Introduction
