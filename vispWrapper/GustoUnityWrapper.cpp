@@ -8,7 +8,26 @@
 
 extern "C" {
 
-//-------------------------------------------------------------------
+
+  void Debug::Log(const vpHomogeneousMatrix message, Color color)
+  {
+    std::stringstream ss;
+    ss << message;
+    send_log(ss, color);
+  }
+  void Debug::Log(const vpTranslationVector message, Color color)
+  {
+    std::stringstream ss;
+    ss << message;
+    send_log(ss, color);
+  }
+  void Debug::Log(const vpRotationMatrix message, Color color)
+  {
+    std::stringstream ss;
+    ss << message;
+    send_log(ss, color);
+  }
+  //-------------------------------------------------------------------
   void  Debug::Log(const char *message, Color color)
   {
     if (callbackInstance != nullptr)
@@ -36,7 +55,7 @@ extern "C" {
     send_log(ss, color);
   }
 
-  void  Debug::Log(const float message, Color color)
+  void Debug::Log(const float message, Color color)
   {
     std::stringstream ss;
     ss << message;
@@ -85,11 +104,6 @@ extern "C" {
 
 
 
-
-
-
-
-
 /*!
  * Global variables that are common.
  */
@@ -99,9 +113,9 @@ extern "C" {
 
   unsigned width = 640, height = 480;
   vpCameraParameters cam;
-  std::string videoDevice = "0";
-  std::string megaposeAddress = "127.0.0.1";
-  unsigned megaposePort = 5555;
+  std::string videoDevice;
+  std::string megaposeAddress;
+  unsigned megaposePort;
   int refinerIterations = 1, coarseNumSamples = 576;
   double reinitThreshold = 0.2;
 
@@ -118,18 +132,20 @@ extern "C" {
   vpDetectorDNNOpenCV dnn;
   std::optional<vpRect> detection = std::nullopt;
 
-
   std::shared_ptr<vpMegaPose> megapose;
+  bool megapose_initialized = false;
   std::future<vpMegaPoseEstimate> trackerFuture;
-  bool has_track_future = false;
 
   std::vector<double> megaposeTimes;
   vpMegaPoseEstimate megaposeEstimate; // last Megapose estimation
   vpMegaPoseTracker *megaposeTracker;
+  bool megaposeTracker_initialized = false;
+
   double megaposeStartTime = 0.0;
   vpRect lastDetection; // Last detection (initialization)
   bool initialized = false;
   bool tracking = false;
+  bool callMegapose = true;
   vpImage<vpRGBa> overlayImage(height, width);
 
 
@@ -137,8 +153,14 @@ extern "C" {
   {
     if (m_debug_display_is_initialized) {
       delete displayer;
+    }
+    if (megaposeTracker_initialized) {
       delete megaposeTracker;
     }
+    if (megapose_initialized) {
+      megapose->~vpMegaPose();
+    }
+
     return;
   }
 
@@ -147,6 +169,20 @@ extern "C" {
     frame = cv::Mat(height, width, CV_8UC4, bitmap);
     cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
     cv::flip(frame, frame, 0);
+
+
+    // vpImageConvert::convert(m_I, frame);
+    vpImageConvert::convert(frame, m_I);
+    // cv::resize(frame, frame, cv::Size(width, height));
+    if (m_debug_enable_display && (!m_debug_display_is_initialized)) {
+      displayer = new vpDisplayX(m_I);
+      // displayer.init(m_I);
+      vpDisplay::setTitle(m_I, "Megapose object pose estimation");
+      m_debug_display_is_initialized = true;
+    }
+    if (m_debug_enable_display && m_debug_display_is_initialized) {
+      vpDisplay::display(m_I);
+    }
   }
 
 
@@ -180,12 +216,12 @@ extern "C" {
     }
     else if (matchingDetections.size() == 1) {
       if (m_debug_enable_display) {
-        Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Single detection found", Color::Green);
-        Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Bounding box: ", Color::Green);
-        Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Top: " + std::to_string(matchingDetections[0].getBoundingBox().getTop()), Color::Green);
-        Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Bottom: " + std::to_string(matchingDetections[0].getBoundingBox().getBottom()), Color::Green);
-        Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Left: " + std::to_string(matchingDetections[0].getBoundingBox().getLeft()), Color::Green);
-        Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Right: " + std::to_string(matchingDetections[0].getBoundingBox().getRight()), Color::Green);
+        // Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Single detection found", Color::Green);
+        // Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Bounding box: ", Color::Green);
+        // Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Top: " + std::to_string(matchingDetections[0].getBoundingBox().getTop()), Color::Green);
+        // Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Bottom: " + std::to_string(matchingDetections[0].getBoundingBox().getBottom()), Color::Green);
+        // Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Left: " + std::to_string(matchingDetections[0].getBoundingBox().getLeft()), Color::Green);
+        // Debug::Log("<Sombra> [detectObjectForInitMegaposeDnn] Right: " + std::to_string(matchingDetections[0].getBoundingBox().getRight()), Color::Green);
       }
       return matchingDetections[0].getBoundingBox();
     }
@@ -230,14 +266,18 @@ extern "C" {
 
   void Gusto_MegaPoseServer_Init()
   {
+
     try {
       megapose = std::make_shared<vpMegaPose>(megaposeAddress, megaposePort, cam, height, width);
+      megapose_initialized = true;
     }
     catch (...) {
       throw vpException(vpException::ioError, "Could not connect to Megapose server at " + megaposeAddress + " on port " + std::to_string(megaposePort));
     }
-    // vpMegaPoseTracker megaposeTracker(megapose, objectName, refinerIterations);
+
     megaposeTracker = new vpMegaPoseTracker(megapose, objectName, refinerIterations);
+    megaposeTracker_initialized = true;
+
     megapose->setCoarseNumSamples(coarseNumSamples);
     const std::vector<std::string> allObjects = megapose->getObjectNames();
 
@@ -309,24 +349,9 @@ extern "C" {
 
     double t_start = vpTime::measureTimeMs();
     bool has_det = false;
-    if (m_debug_enable_display && m_debug_display_is_initialized) {
-      vpDisplay::display(m_I);
-    }
 
     // Detection
 
-
-
-
-    // vpImageConvert::convert(m_I, frame);
-    vpImageConvert::convert(frame, m_I);
-    // cv::resize(frame, frame, cv::Size(width, height));
-    if (m_debug_enable_display && (!m_debug_display_is_initialized)) {
-      displayer = new vpDisplayX(m_I);
-      // displayer.init(m_I);
-      vpDisplay::setTitle(m_I, "Megapose object pose estimation");
-      m_debug_display_is_initialized = true;
-    }
     detection = detectObjectForInitMegaposeDnn(dnn, frame, objectName);
     // vpRect(detection.value().getLeft(), detection.value().getTop(), detection.value().getWidth(), detection.value().getHeight()), vpColor::red, false, 2);
     if (detection) {
@@ -350,56 +375,135 @@ extern "C" {
     return has_det;
   }
 
-  bool Gusto_MegaPose_Tracking_Process()
+
+
+  vpColor interpolate(const vpColor &low, const vpColor &high, const float f)
   {
-    bool Need_Reinit = true;
-    bool overlayModel = true;
+    const float r = ((float)high.R - (float)low.R) * f;
+    const float g = ((float)high.G - (float)low.G) * f;
+    const float b = ((float)high.B - (float)low.B) * f;
+    return vpColor((unsigned char)r, (unsigned char)g, (unsigned char)b);
+  }
 
-    // if (has_track_future && trackerFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-    //   megaposeEstimate = trackerFuture.get();
-    //   if (tracking) {
-    //     megaposeTimes.push_back(vpTime::measureTimeMs() - megaposeStartTime);
-    //   }
-    //   has_track_future = false;
-    //   tracking = true;
-    //   if (overlayModel) {
-    //     overlayImage = megapose->viewObjects({ objectName }, { megaposeEstimate.cTo }, "full");
-    //   }
-
-    //   if (megaposeEstimate.score < reinitThreshold) { // If confidence is low, require a reinitialisation with 2D detection
-    //     initialized = false;
-    //     detection = std::nullopt;
-    //   }
+  void displayScore(const vpImage<vpRGBa> &I, float score)
+  {
+    const unsigned top = static_cast<unsigned>(I.getHeight() * 0.85f);
+    const unsigned height = static_cast<unsigned>(I.getHeight() * 0.1f);
+    const unsigned left = static_cast<unsigned>(I.getWidth() * 0.05f);
+    const unsigned width = static_cast<unsigned>(I.getWidth() * 0.5f);
+    vpRect full(left, top, width, height);
+    vpRect scoreRect(left, top, width * score, height);
+    const vpColor low = vpColor::red;
+    const vpColor high = vpColor::green;
+    const vpColor c = interpolate(low, high, score);
+    if (m_debug_enable_display && m_debug_display_is_initialized) {
+      vpDisplay::displayRectangle(I, full, c, false, 5);
+      vpDisplay::displayRectangle(I, scoreRect, c, true, 1);
+    }
+  }
+  void overlayRender(vpImage<vpRGBa> &I, const vpImage<vpRGBa> &overlay)
+  {
+    // std::cout << "I size" << I.getHeight() << " " << I.getWidth() << std::endl;
+    // std::cout << "overlay size" << overlay.getHeight() << " " << overlay.getWidth() << std::endl;
+    // if (I.getHeight() != overlay.getHeight() || I.getWidth() != overlay.getWidth()) {
+    //   std::cerr << "overlayRender: I and overlay must be of the same size" << std::endl;
+    //   return;
     // }
+    const vpRGBa black = vpRGBa(0, 0, 0);
+    for (unsigned int i = 0; i < I.getHeight(); ++i) {
+      for (unsigned int j = 0; j < I.getWidth(); ++j) {
+        if (overlay[i][j] != black) {
+          I[i][j] = overlay[i][j];
+        }
+      }
+    }
+  }
+
+  bool Gusto_MegaPose_Tracking_Process(float *position, float *rotation)
+  {
+    bool reinit = false;
+    bool overlayModel = false;
+
+    // Debug::Log("Sombra: has_track_future = ", Color::Red);
+    // Debug::Log(has_track_future, Color::Red);
+    // if (has_track_future) {
+    //   Debug::Log("Sombra: trackerFuture Status = ", Color::Red);
+    //   Debug::Log(trackerFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready, Color::Red);
+    // }
+
+    if (!callMegapose && trackerFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+
+      megaposeEstimate = trackerFuture.get();
+
+      if (tracking) {
+        megaposeTimes.push_back(vpTime::measureTimeMs() - megaposeStartTime);
+      }
+      callMegapose = true;
+      tracking = true;
+      // if (overlayModel) {
+      //   overlayImage = megapose->viewObjects({ objectName }, { megaposeEstimate.cTo }, "full");
+      // }
+
+      if (megaposeEstimate.score < reinitThreshold) { // If confidence is low, require a reinitialisation with 2D detection
+        initialized = false;
+        detection = std::nullopt;
+        reinit = true;
+      }
+    }
 
 
   //   //! [Check megapose]
   //   //! [Call MegaPose]
-    if (!initialized) {
-      tracking = false;
-      if (detection) {
-        Debug::Log("Sombra: <Client> Initialising Megapose with 2D detection", Color::Blue);
-        vpDisplay::displayRectangle(m_I, vpRect(detection.value().getLeft(), detection.value().getTop(), detection.value().getWidth(), detection.value().getHeight()), vpColor::red, false, 2);
-        vpDisplay::flush(m_I);
-        // initialized = true;
-        lastDetection = *detection;
-        Debug::Log("Sombra: megaposeTracker->init(m_I, lastDetection)", Color::Red);
-        try {
+    if (callMegapose) {
+      if (!initialized) {
+        tracking = false;
+        if (detection) {
+          // Debug::Log("Sombra: <Client> Initialising Megapose with 2D detection", Color::Blue);
+          if (m_debug_enable_display && m_debug_display_is_initialized) {
+            vpDisplay::displayRectangle(m_I, vpRect(detection.value().getLeft(), detection.value().getTop(), detection.value().getWidth(), detection.value().getHeight()), vpColor::red, false, 2);
+            vpDisplay::flush(m_I);
+          }
+          lastDetection = *detection;
+          // Debug::Log("Sombra: megaposeTracker->init(m_I, lastDetection)", Color::Red);
+            // vpImage<vpRGBa> debug_I;
+            // vpRect debug_lastDetection; // Last detection (initialization)
+            // trackerFuture = megaposeTracker->init(debug_I, debug_lastDetection);
           trackerFuture = megaposeTracker->init(m_I, lastDetection);
+          initialized = true;
 
+          callMegapose = false;
         }
-        catch (...) {
-          throw vpException(vpException::ioError, "Error with megaposeTracker->init(m_I, lastDetection)");
-        }
-        has_track_future = true;
+      }
+      else {
+        trackerFuture = megaposeTracker->track(m_I);
+        callMegapose = false;
+
+        megaposeStartTime = vpTime::measureTimeMs();
       }
     }
-    else {
-      trackerFuture = megaposeTracker->track(m_I);
-      has_track_future = true;
 
-      megaposeStartTime = vpTime::measureTimeMs();
+    if (tracking) {
+      if (m_debug_enable_display && m_debug_display_is_initialized) {
+        if (overlayModel) {
+          overlayRender(m_I, overlayImage);
+          vpDisplay::display(m_I);
+        }
+        vpDisplay::displayFrame(m_I, megaposeEstimate.cTo, cam, 0.05, vpColor::none, 3);
+      }
+      // memcpy(position, megaposeEstimate.cTo.getTranslationVector().data, 3 * sizeof(float));
+      // memcpy(rotation, megaposeEstimate.cTo.getRotationMatrix().data, 9 * sizeof(float));
+      for (size_t i = 0; i < 3; i++) {
+        position[i] = megaposeEstimate.cTo.getTranslationVector().data[i];
+        for (size_t j = 0; j < 3; j++) {
+          rotation[i * 3 + j] = megaposeEstimate.cTo.getRotationMatrix().data[i * 3 + j];
+        }
+      }
+
+      displayScore(m_I, megaposeEstimate.score);
     }
-    return !Need_Reinit;
+    if (m_debug_enable_display && m_debug_display_is_initialized) {
+      vpDisplay::flush(m_I);
+    }
+    return reinit;
   }
 }

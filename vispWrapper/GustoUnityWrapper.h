@@ -58,7 +58,7 @@ extern "C" {
   //   std::optional<vpRect> detectObjectForInitMegaposeDnn(vpDetectorDNNOpenCV &detector, const cv::Mat &I, const std::string &detectionLabel);
 
   VISP_UNITY_EXPORT
-    bool Gusto_MegaPose_Tracking_Process();
+    bool Gusto_MegaPose_Tracking_Process(float *position, float *rotation);
 
   VISP_UNITY_EXPORT
     void Gusto_CppWrapper_MemoryFree();
@@ -82,7 +82,9 @@ public:
   static void Log(const float message, Color color = Color::Black);
   static void Log(const double message, Color color = Color::Black);
   static void Log(const bool message, Color color = Color::Black);
-
+  static void Log(const vpHomogeneousMatrix message, Color color = Color::Black);
+  static void Log(const vpTranslationVector message, Color color = Color::Black);
+  static void Log(const vpRotationMatrix message, Color color = Color::Black);
 private:
   static void send_log(const std::stringstream &ss, const Color &color);
 };

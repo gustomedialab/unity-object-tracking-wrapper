@@ -38,10 +38,10 @@ float detectorConfidenceThreshold = 0.65f, detectorNmsThreshold = 0.5f, detector
 float detectorScaleFactor = 0.0039f;
 bool  detectorSwapRB = false;
 
+std::shared_ptr<vpMegaPose> megapose;
 
 void Gusto_MegaPoseServer_Init1()
 {
-  std::shared_ptr<vpMegaPose> megapose;
   try {
     std::cout << "debug1" << std::endl;
 
@@ -52,7 +52,9 @@ void Gusto_MegaPoseServer_Init1()
     throw vpException(vpException::ioError, "Could not connect to Megapose server at " + megaposeAddress + " on port " + std::to_string(megaposePort));
   }
   std::cout << "debug2" << std::endl;
-  vpMegaPoseTracker megaposeTracker(megapose, objectName, refinerIterations);
+  vpMegaPoseTracker *megaposeTracker;
+  megaposeTracker = new vpMegaPoseTracker(megapose, objectName, refinerIterations);
+  // vpMegaPoseTracker megaposeTracker(megapose, objectName, refinerIterations);
   megapose->setCoarseNumSamples(coarseNumSamples);
   const std::vector<std::string> allObjects = megapose->getObjectNames();
 
@@ -65,10 +67,14 @@ void Gusto_MegaPoseServer_Init1()
   bool overlayModel = true;
   std::cout << "debug3" << std::endl;
   bool has_track_future = false;
-  
-  if (has_track_future && trackerFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
-    std::cout << "diu" << std::endl;
-  }
+
+  // if (has_track_future && trackerFuture.wait_for(std::chrono::milliseconds(0)) == std::future_status::ready) {
+  //   std::cout << "diu" << std::endl;
+  // }
+
+  vpImage<vpRGBa> m_I;
+  vpRect lastDetection; // Last detection (initialization)
+  trackerFuture = megaposeTracker->init(m_I, lastDetection);
 
 }
 
@@ -87,6 +93,8 @@ GustoDebug.cpp:(.text+0x177f): undefined reference to `vpMegaPose::vpMegaPose(st
 GustoDebug.cpp:(.text._ZNSt23_Sp_counted_ptr_inplaceI10vpMegaPoseSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv[_ZNSt23_Sp_counted_ptr_inplaceI10vpMegaPoseSaIS0_ELN9__gnu_cxx12_Lock_policyE2EE10_M_disposeEv]+0x9): undefined reference to `vpMegaPose::~vpMegaPose()'
 collect2: error: ld returned 1 exit status
 */
-  Gusto_MegaPoseServer_Init1();
+  // Gusto_MegaPoseServer_Init1();
+
+
   return 0;
 }

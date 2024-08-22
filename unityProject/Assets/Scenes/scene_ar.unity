@@ -288,6 +288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47996b32f03cc504f805edab8767f594, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  effect: {fileID: 1077908745}
   camera_id: 0
   cam_px: 600
   cam_py: 600
@@ -449,6 +450,80 @@ LightingSettings:
   m_PVRTiledBaking: 0
   m_NumRaysToShootPerTexel: -1
   m_RespectSceneVisibilityWhenBakingGI: 0
+--- !u!1001 &1077908744
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 6.89
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2949223954008939524, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5354162125261771123, guid: b1943cad753f5574599cd7ba16fc2934,
+        type: 3}
+      propertyPath: m_Name
+      value: Effect-Crystal-Anna
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b1943cad753f5574599cd7ba16fc2934, type: 3}
+--- !u!1 &1077908745 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5354162125261771123, guid: b1943cad753f5574599cd7ba16fc2934,
+    type: 3}
+  m_PrefabInstance: {fileID: 1077908744}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1533144824
 GameObject:
   m_ObjectHideFlags: 0
@@ -656,3 +731,4 @@ SceneRoots:
   - {fileID: 1956072305}
   - {fileID: 1063809650}
   - {fileID: 139875283}
+  - {fileID: 1077908744}

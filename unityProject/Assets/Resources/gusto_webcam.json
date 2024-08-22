@@ -1,5 +1,5 @@
 {
-  "height": 480,
+  "height": 640,
   "width": 640,
   "video-device": "0",
   "object": "WOFSnowgie8k",
@@ -13,7 +13,7 @@
     "v0": 522.8416845739076
   },
   "detector": {
-    "model-path": "/media/sombrali/HDD1/3d_object_detection/visp/script/dataset_generator/yolov7/runs/train/yolov7-tiny-20240820-3cls-001take3/weights/best.onnx",
+    "model-path": "/media/sombrali/HDD1/3d_object_detection/visp/script/dataset_generator/yolov7/runs/train/yolov7-tiny-20240821-3cls2/weights/best.onnx",
     "config": "none",
     "type": "yolov7",
     "framework": "onnx",
@@ -36,7 +36,7 @@
 
   "megapose": {
     "address": "127.0.0.1",
-    "port": 5555,
+    "port": 1234,
     "refinerIterations": 10,
     "initialisationNumSamples": 1024
   },

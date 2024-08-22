@@ -52,34 +52,20 @@ using Newtonsoft.Json;
 
 public class Script_ar : MonoBehaviour
 {
-  // Functions imported FROM ViSPUnity wrapper (DLL on Windows, Bundle on OSX)
-  // [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Visp_EnableDisplayForDebug")]
-  // public static extern void Visp_EnableDisplayForDebug(bool enable_display);
-  // [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Visp_WrapperFreeMemory")]
-  // public static extern void Visp_WrapperFreeMemory();
-  // [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Visp_ImageUchar_SetFromColor32Array_test")]
-  // public static extern void Visp_ImageUchar_SetFromColor32Array(Color32[] bitmap, int height, int width);
-  // [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Visp_CameraParameters_Init")]
-  // public static extern void Visp_CameraParameters_Init(double cam_px, double cam_py, double cam_u0, double cam_v0);
-  // [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Visp_DetectorAprilTag_Init")]
-  // public static extern void Visp_DetectorAprilTag_Init(float quad_decimate, int nthreads);
-  // [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Visp_DetectorAprilTag_Process")]
-  // public static extern bool Visp_DetectorAprilTag_Process(double tag_size, float[] tag_cog, float[] tag_length, float[] tag_cMo, double[] detection_time);
-  [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptionsAttribute()]
+  public GameObject effect;
 
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_ImageUchar_SetFromColor32Array")]
   public static extern void Gusto_ImageUchar_SetFromColor32Array(Color32[] bitmap, int height, int width);
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_Init")]
   public static extern void Gusto_Init(string ConfigPath);
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_MegaPoseServer_Init")]
-
   public static extern void Gusto_MegaPoseServer_Init();
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_CameraParameters_Init")]
   public static extern void Gusto_CameraParameters_Init(double cam_px, double cam_py, double cam_u0, double cam_v0);
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_Detection2D_Process")]
   public static extern bool Gusto_Detection2D_Process(double[] has_det, double[] detection_time);
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_MegaPose_Tracking_Process")]
-  public static extern bool Gusto_MegaPose_Tracking_Process();
+  public static extern bool Gusto_MegaPose_Tracking_Process(float[] est_position, float[] est_rotation);
 
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_CppWrapper_MemoryFree")]
   public static extern void Gusto_CppWrapper_MemoryFree();
@@ -133,8 +119,9 @@ public class Script_ar : MonoBehaviour
   float[] m_tag_cMo = new float[16];
   double[] m_detection_time = new double[1];
   double[] bbox_xywh = new double[4];
-
-  bool call_megapose = false;
+  float[] est_position = new float[3];
+  float[] est_rotation = new float[9];
+  bool reinit = true;
   bool m_wct_resolution_updated = false;
   float m_aspect_ratio;
   // For debug log
@@ -169,14 +156,7 @@ public class Script_ar : MonoBehaviour
 
   void Awake()
   {
-    //TrackingModelConfig tracking_model_config = new TrackingModelConfig();
-    //configJson = JsonConvert.SerializeObject(tracking_model_config, Formatting.Indented);
-    // Debug.Log(configJson);
-    // var text = Resources.Load<TextAsset>(ConfigName).text;
-    // var config = JsonConvert.DeserializeObject<TrackingModelConfig>(text);
     Debug.Log(ConfigPath);
-    // Debug.Log(config.Detector.ModelPath);
-    // Debug.Log("12321312");
   }
   void Start()
   {
@@ -214,6 +194,7 @@ public class Script_ar : MonoBehaviour
 
     // ConfigPath must be a absolute path
     Gusto_Init(ConfigPath);
+    Gusto_MegaPoseServer_Init();
     Debug.Log("[Gusto_Detection2D_Init] Finished");
     // For debugging purposes, prints available devices to the console
     if(m_log_start) {
@@ -222,9 +203,6 @@ public class Script_ar : MonoBehaviour
       }
       Debug.Log("Device name: " + m_webCamTexture.deviceName);
       Debug.Log("Web Cam Texture Resolution init : " + m_webCamTexture.width + " " + m_webCamTexture.height);
-      //Debug.Log("Screen resolution : " + Screen.currentResolution.width + " " + Screen.currentResolution.height);
-      //Debug.Log("Base rotation : " + m_baseRotation);
-      //Debug.Log("Video rotation angle: " + m_webCamTexture.videoRotationAngle);
       Debug.Log("Tag detection settings: quad_decimate=" + quad_decimate + " nthreads=" + nthreads);
       Debug.Log("Camera parameters: u0=" + cam_u0 + " v0=" + cam_v0 + " px=" + cam_px + " py=" + cam_py);
       Debug.Log("Tag size [m]: " + tag_size);
@@ -274,86 +252,37 @@ public class Script_ar : MonoBehaviour
       }
     }
 
-    //transform.rotation = m_baseRotation * Quaternion.AngleAxis(m_webCamTexture.videoRotationAngle, Vector3.up);
 
     if (m_log_start) {
       Debug.Log("Image size: " + m_webCamTexture.width + " x " + m_webCamTexture.height);
       m_log_start = false;
     }
-    // // Update image
-    // Visp_ImageUchar_SetFromColor32Array(m_webCamTexture.GetPixels32(), m_webCamTexture.height, m_webCamTexture.width);
-    // // Detect tag
-    // bool success = Visp_DetectorAprilTag_Process(tag_size, m_tag_cog, m_tag_length, m_tag_cMo, m_detection_time);
 
     Gusto_ImageUchar_SetFromColor32Array(m_webCamTexture.GetPixels32(), m_webCamTexture.height, m_webCamTexture.width);
 
-    // Detect tag
-    // bool success = Gusto_Detection2D_Process(m_detection_time);
-    if (!call_megapose){
+    if (reinit){
       bool has_det = Gusto_Detection2D_Process(bbox_xywh, m_detection_time);
       if (has_det) {
-        call_megapose = true;
+        reinit = false;
       }
+    }else{
+      Debug.Log("reinit = " + reinit);
+      bool[] catch_exception = new bool[1];
+      catch_exception[0] = false;
+      reinit = Gusto_MegaPose_Tracking_Process(est_position, est_rotation);
     }
-    if (call_megapose){
-      Debug.Log("Detection2D bbox: " + bbox_xywh[0] + " " + bbox_xywh[1] + " " + bbox_xywh[2] + " " + bbox_xywh[3]);
-      try{
-        call_megapose = Gusto_MegaPose_Tracking_Process();
-      }catch(System.Exception e){
-        Debug.Log(e);
-      }
-    }
-    // if (success) {
-    //   if (m_log_process) {
-    //     Debug.Log("tag cog: " + m_tag_cog[0] + " " + m_tag_cog[1]);
-    //     Debug.Log("tag length: " + m_tag_length[0] + " " + m_tag_length[1] + " " + m_tag_length[2] + " " + m_tag_length[3] + " " + m_tag_length[4] + " " + m_tag_length[5]);
-    //     Debug.Log("cMo:\n" + m_tag_cMo[0] + " " + m_tag_cMo[1] + " " + m_tag_cMo[2]  + " " + m_tag_cMo[3] + "\n"
-    //                        + m_tag_cMo[4] + " " + m_tag_cMo[5] + " " + m_tag_cMo[6]  + " " + m_tag_cMo[7] + "\n"
-    //                        + m_tag_cMo[8] + " " + m_tag_cMo[9] + " " + m_tag_cMo[10] + " " + m_tag_cMo[11]);
-    //     Debug.Log("Detection process time: " + m_detection_time[0] + " ms");
-    //     m_log_process = false;
-    //   }
+    Matrix4x4 cTo = new Matrix4x4(
+      new Vector4(est_rotation[0], est_rotation[3], est_rotation[6], 0.0f),
+      new Vector4(est_rotation[1], est_rotation[4], est_rotation[7], 0.0f),
+      new Vector4(est_rotation[2], est_rotation[5], est_rotation[8], 0.0f),
+      new Vector4(est_position[0], est_position[1], est_position[2], 1.0f)
+    );
 
-    //   // Height of m_webCamTexture plane remains fixed (10 units) but width = 10*m_aspect_ratio
-    //   float x = -10f * m_aspect_ratio * (m_tag_cog[0] / m_webCamTexture.width - 1f / 2f);
-    //   float y = -10f * (m_tag_cog[1] / m_webCamTexture.height - 1f / 2f);
 
-    //   Vector3 vec = new Vector3(x, y, -9);
+    // Debug.Log(cTo.ToString());
+    effect.transform.position = new Vector3(est_position[0], est_position[1], est_position[2]);
+    effect.transform.rotation = cTo.rotation;
 
-    //   // Show game objects
-    //   m_cube.SetActive(true);
-    //   m_cube_pivot.SetActive(true);
-
-    //   // Change the coordinates of Cube by setting them equal to vector3 vec
-    //   //m_cube.GetComponent<Transform>().position = vec;
-    //   m_cube_pivot.GetComponent<Transform>().position = vec;
-
-    //   // Comparing the value of diagonals of polygon: this is more accurate than comparing sides of bounding box.
-    //   float max_dim = System.Math.Max(m_tag_length[4], m_tag_length[5]);
-
-    //   // Scaling factor for Cube: {scale the cube by a factor of 10 if the value of side (diagonal/sqrt(2)) is 480}
-    //   float scale = 10.0f / m_webCamTexture.height * max_dim / (float)Math.Sqrt(2);
-
-    //   m_cube.GetComponent<Transform>().localPosition = new Vector3(0.5f * scale, 0, 0);
-
-    //   m_cube.transform.localScale = new Vector3(scale, scale, scale);
-
-    //   Vector3 forward;
-    //   forward.x = m_tag_cMo[0];
-    //   forward.y = m_tag_cMo[4];
-    //   forward.z = m_tag_cMo[8];
-    //   Vector3 upwards;
-    //   upwards.x = m_tag_cMo[1];
-    //   upwards.y = m_tag_cMo[5];
-    //   upwards.z = m_tag_cMo[9];
-
-    //   m_cube_pivot.transform.rotation = Quaternion.LookRotation(forward, upwards);
-    // }
-    // else {
-    //   // Hide game objects
-    //   m_cube.SetActive(false);
-    //   m_cube_pivot.SetActive(false);
-    // }
   }
 
   void OnApplicationQuit()
