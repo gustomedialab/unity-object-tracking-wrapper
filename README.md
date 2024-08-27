@@ -48,10 +48,3 @@ This project contains:
   - generic model-based tracking of a cube with an AprilTag glued on one cube face.
 
 This project is compatible with Ubuntu, MacOS and Windows platforms.
-
-### Augmented Reality in Unity using ViSP
-
-* The corresponding Unity scene is available in `unityProject/Assets/Scenes/scene_ar.unity`.
-* On each new image AprilTag is detected and localized in 3D.
-* A virtual red cube is projected in the scene over the tag thanks to the tag pose estimated with respect to the camera frame.
-* Check the video demonstration on YouTube: https://youtu.be/iuD8syhNoGU
