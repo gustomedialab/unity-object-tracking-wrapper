@@ -100,6 +100,9 @@ public class gusto_tracking_example : MonoBehaviour
   [Header("Debugging Settings")]
   public gusto_tracking_example.TFType debug_display = TFType.Disabled;
 
+  [Header("2D Tracking Option")]
+  public gusto_tracking_example.TFType Enable2DTracking = TFType.Disabled;
+
   [Header("3D Tracking Option")]
   public gusto_tracking_example.TFType Enable3DTracking = TFType.Disabled;
 
@@ -142,9 +145,14 @@ public class gusto_tracking_example : MonoBehaviour
     Gusto_CameraParameters_Init(cam_px, cam_py, cam_u0, cam_v0);
 
     // ConfigPath must be a absolute path
-    Gusto_Init(ConfigPath);
-    Gusto_MegaPoseServer_Init();
-    Debug.Log("[Gusto_Detection2D_Init] Finished");
+    if (Enable2DTracking == TFType.Enabled){
+      Gusto_Init(ConfigPath);
+      Debug.Log("[Gusto_Init] Finished");
+    }
+    if (Enable3DTracking == TFType.Enabled){
+      Gusto_MegaPoseServer_Init();
+      Debug.Log("[Gusto_MegaPoseServer_Init] Finished");
+    }
     // For debugging purposes, prints available devices to the console
     if(m_log_start) {
       for(int i = 0; i < m_devices.Length; i++) {
@@ -207,24 +215,23 @@ public class gusto_tracking_example : MonoBehaviour
       m_log_start = false;
     }
     Gusto_ImageUchar_SetFromColor32Array(m_webCamTexture.GetPixels32(), m_webCamTexture.height, m_webCamTexture.width);
-    if (Enable3DTracking == TFType.Disabled){
+    if (Enable2DTracking == TFType.Enabled){
       bool has_det = Gusto_Detection2D_Process(bbox_xywh, m_detection_time);
-    }else{
-      if (reinit){
-        bool has_det = Gusto_Detection2D_Process(bbox_xywh, m_detection_time);
-        if (has_det) { reinit = false; }
-      }else{
-        reinit = Gusto_MegaPose_Tracking_Process(est_position, est_rotation);
+      if (has_det) { reinit = false; }
+      if (Enable3DTracking == TFType.Disabled){
+        if (!reinit){
+          reinit = Gusto_MegaPose_Tracking_Process(est_position, est_rotation);
+          Matrix4x4 cTo = new Matrix4x4(
+          new Vector4(est_rotation[0], est_rotation[3], est_rotation[6], 0.0f),
+          new Vector4(est_rotation[1], est_rotation[4], est_rotation[7], 0.0f),
+          new Vector4(est_rotation[2], est_rotation[5], est_rotation[8], 0.0f),
+          new Vector4(est_position[0], est_position[1], est_position[2], 1.0f)
+        );
+        // Debug.Log(cTo.ToString());
+        effect.transform.position = new Vector3(est_position[0], est_position[1], est_position[2]);
+        effect.transform.rotation = cTo.rotation;
+        }
       }
-      Matrix4x4 cTo = new Matrix4x4(
-        new Vector4(est_rotation[0], est_rotation[3], est_rotation[6], 0.0f),
-        new Vector4(est_rotation[1], est_rotation[4], est_rotation[7], 0.0f),
-        new Vector4(est_rotation[2], est_rotation[5], est_rotation[8], 0.0f),
-        new Vector4(est_position[0], est_position[1], est_position[2], 1.0f)
-      );
-      // Debug.Log(cTo.ToString());
-      effect.transform.position = new Vector3(est_position[0], est_position[1], est_position[2]);
-      effect.transform.rotation = cTo.rotation;
     }
   }
 
