@@ -13,7 +13,7 @@
     "v0": 522.8416845739076
   },
   "detector": {
-    "model-path": "/media/sombrali/HDD1/3d_object_detection/visp/script/dataset_generator/yolov7/runs/train/yolov7-tiny-20240821-3cls2/weights/best.onnx",
+    "model-path": "./Assets/Weights/yolov7-tiny-20240821-3cls2.onnx",
     "config": "none",
     "type": "yolov7",
     "framework": "onnx",

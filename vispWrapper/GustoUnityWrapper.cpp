@@ -296,7 +296,7 @@ extern "C" {
   void Gusto_Init(const char *config_path)
   {
 
-
+    Debug::Log(std::filesystem::current_path().generic_string(), Color::Red);
     int argc = 3;
     const char *argv[3] = { "C# to C++ binding config", "--config", config_path };
 
