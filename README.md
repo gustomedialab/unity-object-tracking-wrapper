@@ -1,4 +1,4 @@
-## mac build
+## For MACOS Build
 
 ### Install prerequisites
 ```
