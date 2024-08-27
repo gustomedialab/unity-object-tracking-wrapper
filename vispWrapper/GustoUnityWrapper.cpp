@@ -136,7 +136,7 @@ extern "C" {
 
   std::vector<double> megaposeTimes;
   vpMegaPoseEstimate megaposeEstimate; // last Megapose estimation
-  vpMegaPoseTracker *megaposeTracker;
+  static vpMegaPoseTracker *megaposeTracker = nullptr;
   bool megaposeTracker_initialized = false;
 
   double megaposeStartTime = 0.0;
@@ -156,7 +156,8 @@ extern "C" {
     }
     if (megaposeTracker_initialized) {
       megaposeTracker_initialized = false;
-      delete megaposeTracker;
+      // delete megaposeTracker; // sombra: I think it should be deleted but it would cause crash... need to check later
+      megaposeTracker = nullptr;
     }
     if (megapose_initialized) {
       initialized = false;
@@ -165,6 +166,9 @@ extern "C" {
       megapose_initialized = false;
       megapose->~vpMegaPose();
     }
+
+
+
 
     return;
   }
