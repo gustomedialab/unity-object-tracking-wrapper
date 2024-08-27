@@ -102,8 +102,6 @@ extern "C" {
   static vpDisplay *displayer = nullptr;
 
 
-
-
 /*!
  * Global variables that are common.
  */
@@ -119,7 +117,7 @@ extern "C" {
   int refinerIterations = 1, coarseNumSamples = 576;
   double reinitThreshold = 0.2;
 
-  std::string detectorModelPath = "/media/sombrali/HDD1/3d_object_detection/visp/script/dataset_generator/yolov7/runs/train/yolo7x_640_480_20240414_001_3objects_combined/weights/best.onnx", detectorConfig = "none";
+  std::string detectorModelPath = "./best.onnx", detectorConfig = "none";
   std::string detectorFramework = "onnx", detectorTypeString = "yolov7";
   std::string objectName = "cube";
   std::vector<std::string> labels = { "cube" };
@@ -148,16 +146,23 @@ extern "C" {
   bool callMegapose = true;
   vpImage<vpRGBa> overlayImage(height, width);
 
-
+  // recycle functions
+  // not only pointer we need to free, the global variables should be reset as well.
   void Gusto_CppWrapper_MemoryFree()
   {
     if (m_debug_display_is_initialized) {
+      m_debug_display_is_initialized = false;
       delete displayer;
     }
     if (megaposeTracker_initialized) {
+      megaposeTracker_initialized = false;
       delete megaposeTracker;
     }
     if (megapose_initialized) {
+      initialized = false;
+      tracking = false;
+      callMegapose = true;
+      megapose_initialized = false;
       megapose->~vpMegaPose();
     }
 
@@ -169,7 +174,6 @@ extern "C" {
     frame = cv::Mat(height, width, CV_8UC4, bitmap);
     cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
     cv::flip(frame, frame, 0);
-
 
     // vpImageConvert::convert(m_I, frame);
     vpImageConvert::convert(frame, m_I);
@@ -266,6 +270,7 @@ extern "C" {
 
   void Gusto_MegaPoseServer_Init()
   {
+    Debug::Log(megapose_initialized, Color::Red);
 
     try {
       megapose = std::make_shared<vpMegaPose>(megaposeAddress, megaposePort, cam, height, width);
@@ -459,10 +464,7 @@ extern "C" {
         tracking = false;
         if (detection) {
           // Debug::Log("Sombra: <Client> Initialising Megapose with 2D detection", Color::Blue);
-          if (m_debug_enable_display && m_debug_display_is_initialized) {
-            vpDisplay::displayRectangle(m_I, vpRect(detection.value().getLeft(), detection.value().getTop(), detection.value().getWidth(), detection.value().getHeight()), vpColor::red, false, 2);
-            vpDisplay::flush(m_I);
-          }
+
           lastDetection = *detection;
           // Debug::Log("Sombra: megaposeTracker->init(m_I, lastDetection)", Color::Red);
             // vpImage<vpRGBa> debug_I;
@@ -470,8 +472,12 @@ extern "C" {
             // trackerFuture = megaposeTracker->init(debug_I, debug_lastDetection);
           trackerFuture = megaposeTracker->init(m_I, lastDetection);
           initialized = true;
-
           callMegapose = false;
+
+          if (m_debug_enable_display && m_debug_display_is_initialized) {
+            vpDisplay::displayRectangle(m_I, vpRect(detection.value().getLeft(), detection.value().getTop(), detection.value().getWidth(), detection.value().getHeight()), vpColor::red, false, 2);
+            vpDisplay::flush(m_I);
+          }
         }
       }
       else {

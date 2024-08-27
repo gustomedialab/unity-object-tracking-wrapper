@@ -149,6 +149,9 @@ public class Script_ar : MonoBehaviour
   [Header("Debugging Settings")]
   public Script_ar.DebugType debug_display = DebugType.Disabled;
 
+  [Header("3D Tracking Option")]
+  public Script_ar.DebugType Enable3DTracking = DebugType.Disabled;
+
   [Header("Config name")]
   public string ConfigPath;
   public TrackingModelConfig config;
@@ -257,32 +260,33 @@ public class Script_ar : MonoBehaviour
       Debug.Log("Image size: " + m_webCamTexture.width + " x " + m_webCamTexture.height);
       m_log_start = false;
     }
-
     Gusto_ImageUchar_SetFromColor32Array(m_webCamTexture.GetPixels32(), m_webCamTexture.height, m_webCamTexture.width);
-
-    if (reinit){
+    if (Enable3DTracking){
       bool has_det = Gusto_Detection2D_Process(bbox_xywh, m_detection_time);
-      if (has_det) {
-        reinit = false;
-      }
     }else{
-      Debug.Log("reinit = " + reinit);
-      bool[] catch_exception = new bool[1];
-      catch_exception[0] = false;
-      reinit = Gusto_MegaPose_Tracking_Process(est_position, est_rotation);
+      if (reinit){
+        bool has_det = Gusto_Detection2D_Process(bbox_xywh, m_detection_time);
+        if (has_det) {
+          reinit = false;
+        }
+      }else{
+        Debug.Log("reinit = " + reinit);
+        bool[] catch_exception = new bool[1];
+        catch_exception[0] = false;
+        reinit = Gusto_MegaPose_Tracking_Process(est_position, est_rotation);
+      }
+      Matrix4x4 cTo = new Matrix4x4(
+        new Vector4(est_rotation[0], est_rotation[3], est_rotation[6], 0.0f),
+        new Vector4(est_rotation[1], est_rotation[4], est_rotation[7], 0.0f),
+        new Vector4(est_rotation[2], est_rotation[5], est_rotation[8], 0.0f),
+        new Vector4(est_position[0], est_position[1], est_position[2], 1.0f)
+      );
+
+
+      // Debug.Log(cTo.ToString());
+      effect.transform.position = new Vector3(est_position[0], est_position[1], est_position[2]);
+      effect.transform.rotation = cTo.rotation;
     }
-    Matrix4x4 cTo = new Matrix4x4(
-      new Vector4(est_rotation[0], est_rotation[3], est_rotation[6], 0.0f),
-      new Vector4(est_rotation[1], est_rotation[4], est_rotation[7], 0.0f),
-      new Vector4(est_rotation[2], est_rotation[5], est_rotation[8], 0.0f),
-      new Vector4(est_position[0], est_position[1], est_position[2], 1.0f)
-    );
-
-
-    // Debug.Log(cTo.ToString());
-    effect.transform.position = new Vector3(est_position[0], est_position[1], est_position[2]);
-    effect.transform.rotation = cTo.rotation;
-
   }
 
   void OnApplicationQuit()
