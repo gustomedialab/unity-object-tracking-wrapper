@@ -167,9 +167,6 @@ extern "C" {
       megapose->~vpMegaPose();
     }
 
-
-
-
     return;
   }
 
@@ -418,6 +415,7 @@ extern "C" {
     //   std::cerr << "overlayRender: I and overlay must be of the same size" << std::endl;
     //   return;
     // }
+
     const vpRGBa black = vpRGBa(0, 0, 0);
     for (unsigned int i = 0; i < I.getHeight(); ++i) {
       for (unsigned int j = 0; j < I.getWidth(); ++j) {
@@ -487,7 +485,6 @@ extern "C" {
       else {
         trackerFuture = megaposeTracker->track(m_I);
         callMegapose = false;
-
         megaposeStartTime = vpTime::measureTimeMs();
       }
     }
