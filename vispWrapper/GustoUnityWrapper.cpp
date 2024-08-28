@@ -170,6 +170,11 @@ extern "C" {
     return;
   }
 
+  void Gusto_EnableDebugOption(bool _debug_option)
+  {
+    m_debug_enable_display = _debug_option;
+  }
+
   void Gusto_ImageUchar_SetFromColor32Array(unsigned char *bitmap, int height, int width)
   {
     frame = cv::Mat(height, width, CV_8UC4, bitmap);

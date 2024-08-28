@@ -299,7 +299,7 @@ MonoBehaviour:
   nthreads: 1
   debug_display: 1
   Enable2DTracking: 0
-  Enable3DTracking: 0
+  Enable3DTracking: 1
   ConfigPath: /media/sombrali/HDD1/3d_object_detection/visp/visp_unity/unityProject/Assets/Resources/gusto_webcam.json
 --- !u!23 &1063809647
 MeshRenderer:

@@ -13,6 +13,8 @@ using Newtonsoft.Json;
 public class gusto_tracking_example : MonoBehaviour
 {
   public GameObject effect;
+  [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_EnableDebugOption")]
+  public static extern void Gusto_EnableDebugOption(bool _enable_debug);
 
   [DllImport("GustoUnityWrapper", CallingConvention = CallingConvention.Cdecl, EntryPoint = "Gusto_ImageUchar_SetFromColor32Array")]
   public static extern void Gusto_ImageUchar_SetFromColor32Array(Color32[] bitmap, int height, int width);
@@ -144,6 +146,11 @@ public class gusto_tracking_example : MonoBehaviour
     // Visp_DetectorAprilTag_Init(quad_decimate, nthreads);
     Gusto_CameraParameters_Init(cam_px, cam_py, cam_u0, cam_v0);
 
+    if (debug_display == TFType.Enabled){
+      Gusto_EnableDebugOption(true);
+    }else{
+      Gusto_EnableDebugOption(false);
+    }
     // ConfigPath must be a absolute path
     if (Enable2DTracking == TFType.Enabled){
       Gusto_Init(ConfigPath);

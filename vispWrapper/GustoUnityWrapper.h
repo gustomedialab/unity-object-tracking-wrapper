@@ -40,7 +40,7 @@ extern "C" {
 
 
   VISP_UNITY_EXPORT
-    void Gusto_ImageUchar_SetFromColor32Array(unsigned char *bitmap, int height, int width);
+    void Gusto_EnableDebugOption(bool _debug_option = true);
 
   VISP_UNITY_EXPORT
     void Gusto_CameraParameters_Init(double cam_px = 600., double cam_py = 600., double cam_u0 = 340., double cam_v0 = 240.);
@@ -51,6 +51,8 @@ extern "C" {
   VISP_UNITY_EXPORT
     // void Gusto_Init(const std::string config_path);
     void Gusto_Init(const char *config_path);
+  VISP_UNITY_EXPORT
+    void Gusto_ImageUchar_SetFromColor32Array(unsigned char *bitmap, int height, int width);
 
   VISP_UNITY_EXPORT
     bool Gusto_Detection2D_Process(double *bbox_xywh, double *detection_time);
