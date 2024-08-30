@@ -187,7 +187,10 @@ public class gusto_tracking_example : MonoBehaviour
         // ConfigPath must be a absolute path
         if (Enable2DTracking == TFType.Enabled)
         {
-            Gusto_Init(ConfigPath);
+            // Unity asset path to system absolute path
+            var path = Application.dataPath + "/" + ConfigPath;
+            
+            Gusto_Init(path);
             Debug.Log("[Gusto_Init] Finished");
         }
 
