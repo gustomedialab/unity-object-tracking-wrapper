@@ -185,7 +185,7 @@ extern "C" {
     vpImageConvert::convert(frame, m_I);
     // cv::resize(frame, frame, cv::Size(width, height));
     if (m_debug_enable_display && (!m_debug_display_is_initialized)) {
-      displayer = new vpDisplayX(m_I);
+      displayer = new vpDisplayOpenCV(m_I);
       // displayer.init(m_I);
       vpDisplay::setTitle(m_I, "Megapose object pose estimation");
       m_debug_display_is_initialized = true;
