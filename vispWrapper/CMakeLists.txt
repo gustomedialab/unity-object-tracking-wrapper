@@ -59,16 +59,19 @@ find_package(VISP REQUIRED visp_core visp_io visp_detection visp_dnn_tracker vis
 
 include_directories(${VISP_INCLUDE_DIRS})
 
+
+set(VISP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/)
 add_library(GustoUnityWrapper SHARED GustoUnityWrapper.cpp GustoUnityWrapper.h)
-target_link_libraries(GustoUnityWrapper ${VISP_LIBRARIES})
+# add_library(GustoUnityWrapper SHARED GustoUnityWrapper.cpp GustoUnityWrapper.h)
+target_link_libraries(GustoUnityWrapper ${OPENCV_LIBRARIES} ${VISP_LIBRARIES} )
 
 
 # Debug
-set(tutorial_cpp GustoDebug.cpp)
+# set(tutorial_cpp GustoDebug.cpp)
 
-foreach(cpp ${tutorial_cpp})
-  visp_add_target(${cpp})
-endforeach()
+# foreach(cpp ${tutorial_cpp})
+#   visp_add_target(${cpp})
+# endforeach()
 
 
 if(APPLE)
@@ -84,44 +87,5 @@ endif()
 # ----------------------------------------------------------------------------
 install(FILES $<TARGET_FILE:GustoUnityWrapper> DESTINATION ${PROJECT_SOURCE_DIR}/../unityProject/Assets)
 
-# ----------------------------------------------------------------------------
-#   Uninstall target, for "make uninstall"
-# ----------------------------------------------------------------------------
-configure_file(
-  cmake/cmake_uninstall.cmake.in
-  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
-  IMMEDIATE @ONLY)
 
-add_custom_target(uninstall
-  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-#----------------------------------------------------------------------
-# add "doc" target for doxygen documentation building
-#----------------------------------------------------------------------
-find_package(Doxygen)
-if (DOXYGEN_FOUND)
-  if(DOXYGEN_DOT_EXECUTABLE)
-    set(PROJECT_HAVE_DOT "yes")
-  else()
-    set(PROJECT_HAVE_DOT "no")
-  endif()
-  ## we need latex for doxygen because of the formulas
-  find_package(LATEX)
-  if(NOT LATEX_COMPILER)
-    message(STATUS "latex command LATEX_COMPILER not found but usually required. You will probably get warnings and user interaction on doxy run.")
-  endif ()
-  if(NOT MAKEINDEX_COMPILER)
-    message(STATUS "makeindex command MAKEINDEX_COMPILER not found but usually required.")
-  endif ()
-  if(NOT DVIPS_CONVERTER)
-    message(STATUS "dvips command DVIPS_CONVERTER not found but usually required.")
-  endif ()
-
-  configure_file(${PROJECT_SOURCE_DIR}/doc/config-doxygen.cmake
-    ${PROJECT_BINARY_DIR}/doc/config-doxygen
-    @ONLY )
-
-  add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doc/config-doxygen
-    DEPENDS ${PROJECT_BINARY_DIR}/doc/config-doxygen)
-
-endif()
