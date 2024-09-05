@@ -7,16 +7,6 @@
   - vispWrapper/GustoUnityWrapper.h
   - vispWrapper/GustoUnityWrapper.cpp
 
-## Unity-Wrapper Build (all platforms)
-```
-git clone https://github.com/Sombraa711/Cpp-Unity-Binding?tab=readme-ov-file
-cd Cpp-Unity-Binding
-mkdir vispWrapper-build
-cd vispWrapper-build
-cmake ../vispWrapper
-make 
-make install
-```
 
 ## Developement of a wrapper between ViSP and Unity engine
 ### Introduction
