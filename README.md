@@ -1,6 +1,8 @@
 ## For Gusto Dev:
 - C#/Unity side
   - unityProject/Assets/Scripts/gusto_tracking_example.cs
+  - unityProject/Assets/GustoUnityWrapper.bundle # Engine For MACOS
+  - unityProject/Assets/Weights/yolov7-tiny-20240821-3cls2.onnx # 2D Detection Model
 - C++ side
   - vispWrapper/GustoUnityWrapper.h
   - vispWrapper/GustoUnityWrapper.cpp
